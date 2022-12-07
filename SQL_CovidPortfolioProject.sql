@@ -1,8 +1,8 @@
 select * from [Portfolio Project]..CovidDeaths$
 order by 3,4
 
---select * from [Portfolio Project]..CovidVaccinations$
---order by 3,4
+select * from [Portfolio Project]..CovidVaccinations$
+order by 3,4
 
 select location, date, total_cases, new_cases, total_deaths, population
 from [Portfolio Project]..CovidDeaths$
@@ -14,9 +14,6 @@ select location, date, people_fully_vaccinated
 from [Portfolio Project]..CovidVaccinations$
 where continent is null
 order by 1,2
-
-
-
 
 --Looking at total cases vs total deaths in US: shows likliness of death if infected with covid
 
@@ -48,7 +45,7 @@ where continent is not null
 group by location
 order by TotalDeathCount desc
 
---by continent
+--total deaths by continent
 
 select location, max(cast(total_deaths as int)) as TotalDeaths
 from [Portfolio Project]..CovidDeaths$
@@ -56,7 +53,7 @@ where continent is null
 group by location
 order by TotalDeaths desc
 
---worldwide numbers
+--worldwide numbers of cases and deaths
 
 select date, sum(new_cases) as totalCases, sum(cast(new_deaths as int)) as totalDeaths,
 sum(cast(new_deaths as int))/sum(new_cases) * 100 as GlobalDeathRate
@@ -92,7 +89,7 @@ join [Portfolio Project]..CovidVaccinations$ vax
 where deaths.continent is not null
 order by 1, 2, 3
 
---cte 
+-- creating a cte to perform a calculation on partition by in previous query
 
 with PopVsVax (Continent, location, date, population, new_vaccinations, RollingVaccinations)
 as 
@@ -107,7 +104,8 @@ where deaths.continent is not null
 )
 select *, (RollingVaccinations/population) * 100 from PopVsVax
 
---temp table
+--temp table to perform calculation on partition by in previous query
+
 drop table if exists #PercentPopulationVaccinated
 create table #PercentPopulationVaccinated
 (
