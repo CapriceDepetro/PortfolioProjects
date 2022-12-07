@@ -166,3 +166,10 @@ create view FullyVaxedPeopleByContinent as
 select location, date, people_fully_vaccinated
 from [Portfolio Project]..CovidVaccinations$
 where continent is null
+
+create view DeathPercentage as
+Select SUM(new_cases) as total_cases, SUM(cast(new_deaths as int)) as total_deaths, SUM(cast(new_deaths as int))/SUM(new_cases)*100 as DeathPercentage
+From [Portfolio Project]..CovidDeaths$
+where continent is not null 
+Group By date
+
