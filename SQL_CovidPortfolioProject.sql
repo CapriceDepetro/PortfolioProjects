@@ -163,9 +163,11 @@ where continent is not null
 group by date
 
 create view FullyVaxedPeopleByContinent as
-select location, date, people_fully_vaccinated
+select location, max(date) as LatestDate, max(people_fully_vaccinated) as TotalNumberVaccinated
 from [Portfolio Project]..CovidVaccinations$
 where continent is null
+group by location
+
 
 create view DeathPercentage as
 Select SUM(new_cases) as total_cases, SUM(cast(new_deaths as int)) as total_deaths, SUM(cast(new_deaths as int))/SUM(new_cases)*100 as DeathPercentage
