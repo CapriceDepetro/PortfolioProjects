@@ -179,3 +179,4 @@ create view PercentPopulationInfected as
 Select Location, Population, MAX(total_cases) as HighestInfectionCount,  Max((total_cases/population))*100 as PercentPopulationInfected
 From [Portfolio Project]..CovidDeaths$
 Group by Location, Population
+
