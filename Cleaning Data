@@ -1,0 +1,153 @@
+--cleaning data
+
+select * from NashHousing
+
+
+
+--standardizing date formate
+
+alter table nashhousing 
+add SaleDateConverted date
+
+update NashHousing
+set SaleDateConverted = convert(date, saledate)
+
+
+
+
+--Populate property address data
+
+select propertyaddress
+from NashHousing
+
+select a.ParcelID, a.PropertyAddress, b.ParcelID, b.PropertyAddress ,
+isnull(a.propertyaddress, b.PropertyAddress)
+from NashHousing a
+join NashHousing b 
+	on a.ParcelID = b.ParcelID
+	and a.[UniqueID ] <> b.[UniqueID ]
+where a.PropertyAddress is null
+
+update a 
+set propertyaddress = isnull(a.propertyaddress, b.PropertyAddress)
+from NashHousing a
+join NashHousing b 
+	on a.ParcelID = b.ParcelID
+	and a.[UniqueID ] <> b.[UniqueID ]
+where a.PropertyAddress is null
+
+select propertyaddress
+from NashHousing
+where PropertyAddress is null
+
+
+
+
+--Dividing address into seperate columns (address, city, state)
+
+select propertyaddress from NashHousing
+
+select 
+substring(PropertyAddress, 1, charindex(',', PropertyAddress) -1) as Address,
+substring(PropertyAddress, charindex(',', PropertyAddress) +1, len(PropertyAddress)) as City
+from nashhousing
+
+alter table nashhousing
+add PropertySplitAddress Nvarchar(255);
+
+update NashHousing
+set PropertySplitAddress = substring(propertyaddress, 1, charindex(',', propertyaddress) -1)
+
+alter table nashhousing
+add PropertySplitCity nvarchar(255);
+
+update NashHousing
+set PropertySplitCity = substring(PropertyAddress, charindex(',', PropertyAddress) +1, len(PropertyAddress))
+
+
+select owneraddress from NashHousing
+
+select
+parsename(replace(owneraddress, ',', '.') ,3),
+parsename(replace(owneraddress, ',', '.') ,2),
+parsename(replace(owneraddress, ',', '.') ,1)
+from NashHousing
+
+alter table NashHousing
+add OwnerSplitAddress nvarchar(255);
+
+update NashHousing
+Set OwnerSplitAddress = parsename(replace(owneraddress, ',', '.') ,3)
+
+alter table NashHousing
+add OwnerSplitCity nvarchar(255);
+
+update NashHousing
+Set OwnerSplitCity = parsename(replace(owneraddress, ',', '.') ,2)
+
+alter table NashHousing
+add OwnerSplitState nvarchar(255);
+
+update NashHousing
+set OwnerSplitState = parsename(replace(owneraddress, ',', '.') ,1)
+
+
+
+
+--Change Y and N to Yes and No in "Sold as Vacant" field
+
+select distinct(SoldAsVacant), count(soldasvacant)
+from NashHousing
+group by SoldAsVacant
+order by 2
+
+select soldasvacant,
+case
+	when soldasvacant = 'Y' then 'Yes'
+	when soldasvacant = 'N' then 'No'
+	else soldasvacant
+end
+from NashHousing
+
+update NashHousing
+set SoldAsVacant = case
+	when soldasvacant = 'Y' then 'Yes'
+	when soldasvacant = 'N' then 'No'
+	else soldasvacant
+end
+from NashHousing
+
+
+
+
+--Remove Duplicates
+
+WITH RowNumCTE as(
+select *,
+	ROW_NUMBER() OVER (
+	PARTITION BY ParcelID,
+				 PropertyAddress,
+				 SalePrice,
+				 SaleDate,
+				 LegalReference
+				 ORDER BY
+					UniqueID
+					) row_num
+from NashHousing
+--order by ParcelID
+)
+
+Delete from RowNumCTE
+where row_num > 1
+--order by propertyaddress
+
+
+
+
+--Delete Unused Columns
+
+Select * from NashHousing
+
+alter table NashHousing
+drop column OwnerAddress, TaxDistrict, PropertyAddress, SaleDate
+
